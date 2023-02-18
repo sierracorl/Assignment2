@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, request
-import json, urllib
+from flask import Flask, jsonify
+import json
 import re
 
 app = Flask(__name__)
