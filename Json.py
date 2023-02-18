@@ -1,68 +1,66 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import json
 import re
 
 app = Flask(__name__)
-# Load the JSON file from the URL
-with open("https://foyzulhassan.github.io/files/favs.json") as f:
-    data_json = json.loads(f)
 
-    
-# Get all tweets
+# Define URL for Twitter favorites JSON file
+json_url = "https://foyzulhassan.github.io/files/favs.json"
+
+# Read and parse JSON file from URL
+data_json = request.get(json_url).json()
+ 
+# Get tweets w/ time, ID & text
 @app.route('/tweets', methods=['GET'])
 def get_tweets():
     tweets = []
-    for tweet in data_json:
-        tweet_inf = {
-            'created_at': tweet['created_at'],
-            'id': tweet['id'],
-            'text': tweet['text']
-        }
-        tweets.append(tweet_inf)
+    for item in data_json:
+        tweet = {}
+        tweet['timeCreated'] = item['createdAt']
+        tweet['id'] = item['id_str']
+        tweet['text'] = item['txt']
+        tweets.append(tweet)
     return jsonify(tweets)
 
-
-# Get a list of all external links grouped by tweet id
-@app.route('/lines', methods=['GET'])
+# Get external links by tweet ID
+@app.route('/link', methods=['GET'])
 def get_link():
-    link_id = {}
-    for tweet in data_json:
-        link = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                          tweet['text'])
-        link_id[tweet['id']] = link
-    return jsonify(link_id)
+    link = {}
+    for item in data_json:
+        tweetLink = []
+        matches = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', item['full_text'])
+        for match in matches:
+            tweetLink.append(match)
+        link[item['id_str']] = tweetLink
+    return jsonify(link)
 
-
-# Get profile info about a Twitter user
-@app.route('/users/<screen_name>', methods=['GET'])
-def get_user(screen_name):
-    for tweet in data_json:
-        if tweet['user']['screen_name'] == screen_name:
-            user_inf = {
-                'name': tweet['user']['name'],
-                'follow_count': tweet['user']['follow_count'],
-                'friend_count': tweet['user']['friend_count'],
-                'description': tweet['user']['description'],
-                'fav_count': tweet['user']['fav_count']
-            }
-            return jsonify(user_inf)
-    return jsonify({'error': 'User not found'})
-
-
-# Get details about a tweet
+# Get details of a tweet with ID
 @app.route('/tweets/<tweet_id>', methods=['GET'])
 def get_tweet(tweet_id):
-    for tweet in data_json:
-        if tweet['id'] == int(tweet_id):
-            tweet_inf = {
-                'created': tweet['created'],
-                'text': tweet['text'],
-                's.name': tweet['user']['s.name'],
-                'lang': tweet['lang']
-            }
-            return jsonify(tweet_inf)
-    return jsonify({'error': 'Tweet not found'})
+    for item in data_json:
+        if item['id_str'] == tweet_id:
+            tweet = {}
+            tweet['timeCreated'] = item['createdAt']
+            tweet['text'] = item['txt']
+            tweet['screenName'] = item['user']['screenName']
+            tweet['lang'] = item['lang']
+            return jsonify(tweet)
+    return "Tweet not found"
 
+# Get profile info from a user 
+@app.route('/users/<screenName>', methods=['GET'])
+def get_user(screenName):
+    for screenName in data_json:
+            user = {}
+            user['name'] = screenName['name']
+            user['description'] = screenName['description']
+            user['follower_count'] = screenName['follower_count']
+            user['friend_count'] = screenName['friend_count']
+            user['favorite_count'] = screenName['favorite_count']
+            return jsonify(user)
+    else:
+            return "User not found"
 
-if __name__ == "__main__":
-   app.run(debug =True, host="127.0.0.1", port=5000)
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True, host="127.0.0.1", port=5000)
