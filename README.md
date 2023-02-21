@@ -9,13 +9,13 @@
 ~ REST API
 
 NOTE:
-This implementation works on Pycharm as well 
+This implementation works on Pycharm/Postman as well 
 
 ---My implementation uses Flask framework which creates REST APIs that reads and manipulates JSON. 
 
 Instructions: 
 1. Download and extract file
-2. Install Visual Studio Code or Pycharm 
+2. Install Visual Studio Code or Pycharm/Postman
 3. Install Extensions I have listed above if you are using Visual Studio Code
 4. Open Json.py file in Visual Studio Code or Pycharm
 4. Use Postman or any other HTTP client to send requests to the endpoint 
